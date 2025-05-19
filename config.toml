@@ -1,0 +1,30 @@
+[conveyor_motor]
+id = 0
+scale = 800
+acceleration = 1.25
+velocity = 0.5
+
+[hatch]
+open_input = 1
+close_input = 2
+motor.id = 0
+motor.scale = 800
+motor.acceleration = 1.25
+motor.velocity = 0.5
+
+[photo_eye]
+input = 0
+sample_number = 25
+sample_period = 50
+
+[pins]
+manager = "2744"
+operator = "200"
+sudo = "101010101"
+
+[dispense]
+timeout = 0
+
+[setpoint]
+empty = 100
+filling_threshold = 500
