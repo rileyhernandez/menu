@@ -9,4 +9,6 @@ pub enum Error {
     TomlRead(toml::de::Error),
     #[error("Error with file system operation: {0}")]
     FileSystem(std::io::Error),
+    #[error("Feature not yet implemented!")]
+    NotImplemented,
 }
