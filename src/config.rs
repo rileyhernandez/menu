@@ -17,7 +17,7 @@ pub struct Config {
     setpoint: Setpoint,
 }
 impl Config {
-    pub fn new(path: &Path) -> Result<Self, Error> {
+    pub fn read(path: &Path) -> Result<Self, Error> {
         let file_as_string = fs::read_to_string(path).map_err(Error::FileSystem)?;
         toml::from_str(&file_as_string).map_err(Error::TomlRead)
     }

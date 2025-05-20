@@ -1,6 +1,6 @@
-mod config;
-mod error;
-mod config_items;
+pub mod config;
+pub mod error;
+pub mod config_items;
 
 #[cfg(test)]
 mod tests {
@@ -12,7 +12,7 @@ mod tests {
 
     #[test]
     fn load() -> Result<()> {
-        let config = Config::new(Path::new(READ_PATH));
+        let config = Config::read(Path::new(READ_PATH));
         println!("{:?}", config?);
 
         Ok(())
@@ -21,7 +21,7 @@ mod tests {
     #[cfg(feature = "generate")]
     #[test]
     fn generate() -> Result<()> {
-        let config = Config::new(Path::new(READ_PATH))?;
+        let config = Config::read(Path::new(READ_PATH))?;
         config.generate_toml(Path::new(WRITE_PATH))?;
         Ok(())
     }
