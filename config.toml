@@ -1,3 +1,7 @@
+[device]
+model = "IchibuV2"
+number = 0
+
 [conveyor_motor]
 id = 0
 scale = 800

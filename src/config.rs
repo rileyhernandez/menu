@@ -1,9 +1,10 @@
 use std::{fs, path::Path};
-use std::fs::File;
 use serde::{Deserialize, Serialize};
 use crate::error::Error;
 use crate::config_items::*;
 
+#[cfg(feature = "generate")]
+use std::fs::File;
 #[cfg(feature = "generate")]
 use std::io::Write;
 
@@ -16,17 +17,34 @@ pub struct Config {
     dispense: Dispense,
     setpoint: Setpoint,
 }
-impl Config {
-    pub fn read(path: &Path) -> Result<Self, Error> {
+
+pub trait Read {
+    fn read(path: &Path) -> Result<Self, Error> where Self: Sized, for<'de> Self: Deserialize<'de> {
         let file_as_string = fs::read_to_string(path).map_err(Error::FileSystem)?;
         toml::from_str(&file_as_string).map_err(Error::TomlRead)
     }
-    #[cfg(feature = "generate")]
-    fn to_toml_string(&self) -> Result<String, Error> {
+}
+impl Read for Config {}
+#[derive(Deserialize, Serialize, Debug)]
+pub struct ScaleConfig {
+    phidget_id: isize,
+    coefficients: Option<[f64; 4]>,
+}
+impl ScaleConfig {
+    pub fn update_coefficients(&mut self, coefficients: [f64; 4]) {
+        self.coefficients = Some(coefficients);
+    }
+    pub fn has_coefficients(&self) -> bool {
+        self.coefficients.is_some()
+    }
+}
+
+#[cfg(feature = "generate")]
+pub trait Generate {
+    fn to_toml_string(&self) -> Result<String, Error> where Self: Serialize {
         toml::to_string(self).map_err(Error::TomlGeneration)
     }
-    #[cfg(feature = "generate")]
-    pub fn generate_toml(self, file_path: &Path) -> Result<(), Error> {
+    fn generate_toml(self, file_path: &Path) -> Result<(), Error> where Self: Sized, Self: Serialize {
         if let Some(parent) = file_path.parent() {
             fs::create_dir_all(parent).map_err(Error::FileSystem)?;
         }
@@ -35,10 +53,16 @@ impl Config {
             .map_err(Error::FileSystem)?;
         Ok(())
     }
-    #[cfg(feature = "generate")]
-    pub fn overwrite_toml(self, file_path: &Path) -> Result<(), Error> {
+    fn overwrite_toml(self, file_path: &Path) -> Result<(), Error> where Self: Sized, Self: Serialize {
         let mut file = File::create(file_path).map_err(Error::FileSystem)?;
         file.write_all(self.to_toml_string()?.as_bytes()).map_err(Error::FileSystem)?;
         Ok(())
     }
 }
+#[cfg(feature = "generate")]
+impl Generate for Config {}
+#[cfg(feature = "generate")]
+impl Generate for ScaleConfig {}
+#[cfg(feature = "generate")]
+impl Read for ScaleConfig {}
+
