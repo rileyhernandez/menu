@@ -16,4 +16,7 @@ pub enum Error {
     #[cfg(feature = "generate")]
     #[error("Error reaching backend: {0}")]
     Reqwest(reqwest::Error),
+    #[cfg(feature = "generate")]
+    #[error("Device must be assigned a serial number before compiling config file!")]
+    NoSerialNumber,
 }

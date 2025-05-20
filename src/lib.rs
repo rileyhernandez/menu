@@ -34,15 +34,14 @@ mod generate_tests {
     use crate::device::Device;
 
 
-    const READ_PATH: &str = "scale.toml";
+    const READ_PATH: &str = "config.toml";
     const WRITE_PATH: &str = "/home/riley/Downloads/test/config.toml";
     const CALIBRATION_PATH: &str = "https://us-west1-calibration-backend.cloudfunctions.net/test-function";
     const CONFIG_PATH: &str = "http://127.0.0.1:8080";
 
     #[test]
     fn generate() -> Result<()> {
-        let mut config = ScaleConfig::read(Path::new(READ_PATH))?;
-        config.update_coefficients([0.0; 4]);
+        let mut config = Config::read(Path::new(READ_PATH))?;
         config.overwrite_toml(Path::new(WRITE_PATH))?;
         Ok(())
     }

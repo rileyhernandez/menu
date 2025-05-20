@@ -7,9 +7,11 @@ use crate::config_items::*;
 use std::fs::File;
 #[cfg(feature = "generate")]
 use std::io::Write;
+use crate::device::Device;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Config {
+    device: Option<Device>,
     conveyor_motor: Motor,
     hatch: Hatch,
     photo_eye: PhotoEye,
@@ -60,7 +62,14 @@ pub trait Generate {
     }
 }
 #[cfg(feature = "generate")]
-impl Generate for Config {}
+impl Generate for Config {
+    fn to_toml_string(&self) -> Result<String, Error> {
+        if self.device.is_none() {
+            return Err(Error::NoSerialNumber)
+        }
+        toml::to_string(self).map_err(Error::TomlGeneration)
+    }
+}
 #[cfg(feature = "generate")]
 impl Generate for ScaleConfig {}
 #[cfg(feature = "generate")]
