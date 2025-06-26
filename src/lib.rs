@@ -41,7 +41,7 @@ mod tests {
 #[cfg(test)]
 mod generate_tests {
     use std::array;
-    use crate::backend::{CalibrationBackend, ConfigBackend};
+    use crate::backend::{CalibrationBackend, ConfigBackend, CONFIG_BACKEND_URL};
     use crate::ichibu::{Ichibu, ScaleConfig};
     use crate::device::Device;
     use crate::device::Model;
@@ -88,9 +88,13 @@ mod generate_tests {
         //     let libra = Libra { config, device};
         //     libra.add_as_table(Path::new(WRITE_PATH), &format!("LibraV0-{}", name))?;
         // }
-        let url = "http://127.0.0.1:8080";
-        let libra = Libra::pull_from_backend(Device::new(Model::LibraV0, 0), url)?;
-        println!("{:?}", libra);
+        // let url = CONFIG_PATH;
+        // let libra = Libra::pull_from_backend(Device::new(Model::LibraV0, 0), url)?;
+        // println!("{:?}", libra);
+
+        let libras = Libra::read_as_vec(Path::new(WRITE_PATH))?;
+        println!("{:?}", libras);
+        
         Ok(())
     }
 }

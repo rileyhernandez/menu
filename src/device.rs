@@ -3,8 +3,8 @@ use std::fmt;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Device {
-    model: Model,
-    number: usize,
+    pub model: Model,
+    pub number: usize,
 }
 impl Device {
     pub fn new(model: Model, number: usize) -> Self {

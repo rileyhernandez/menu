@@ -10,8 +10,8 @@ use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Libra {
-    pub(crate) config: Config,
-    pub(crate) device: Device
+    pub config: Config,
+    pub device: Device
 }
 #[cfg(feature = "generate")]
 impl Libra {
