@@ -1,7 +1,7 @@
-use thiserror::Error;
-use toml;
 #[cfg(feature = "generate")]
 use reqwest;
+use thiserror::Error;
+use toml;
 
 #[derive(Error, Debug)]
 pub enum Error {
@@ -13,10 +13,15 @@ pub enum Error {
     FileSystem(std::io::Error),
     #[error("Feature not yet implemented!")]
     NotImplemented,
+    #[error("{0}")]
+    Custom(String),
     #[cfg(feature = "generate")]
     #[error("Error reaching backend: {0}")]
     Reqwest(reqwest::Error),
     #[cfg(feature = "generate")]
     #[error("Device must be assigned a serial number before compiling config file!")]
     NoSerialNumber,
+    #[cfg(feature = "generate")]
+    #[error("Error serializing from backend: {0}")]
+    SerdeJson(serde_json::Error),
 }

@@ -1,36 +1,33 @@
+use crate::device::Device;
 use crate::error::Error;
 use reqwest;
-use crate::device::Device;
 
 pub struct CalibrationBackend {
-    path: String
+    path: String,
 }
 impl CalibrationBackend {
-    pub fn new(path: String) -> Self { Self { path } }
+    pub fn new(path: String) -> Self {
+        Self { path }
+    }
 
     pub fn get_config(&self, phidget_id: isize) -> Result<String, Error> {
         let client = reqwest::blocking::Client::new();
-        let url = format!(
-            "{}/{}",
-            self.path, phidget_id
-        );
+        let url = format!("{}/{}", self.path, phidget_id);
         response_from_client(client, url)
     }
 }
 
 pub struct ConfigBackend {
-    path: String
+    path: String,
 }
 impl ConfigBackend {
-    pub fn new(path: String) -> Self { Self { path } }
+    pub fn new(path: String) -> Self {
+        Self { path }
+    }
 
     pub fn get_config(&self, device: Device) -> Result<String, Error> {
         let client = reqwest::blocking::Client::new();
-        let url = format!(
-            "{}/{}",
-            self.path,
-            device
-        );
+        let url = format!("{}/{}", self.path, device);
         response_from_client(client, url)
     }
 }
