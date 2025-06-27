@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub struct Device {
     pub model: Model,
     pub number: usize,
@@ -16,7 +16,7 @@ impl fmt::Display for Device {
         write!(f, "{:?}-{}", self.model, self.number,)
     }
 }
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 pub enum Model {
     IchibuV1,
     IchibuV2,
