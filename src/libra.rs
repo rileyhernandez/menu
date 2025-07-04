@@ -34,6 +34,8 @@ pub struct Config {
     pub load_cell_id: i32,
     pub gain: f64,
     pub offset: f64,
+    pub location: String,
+    pub ingredient: String,
 }
 impl Config {
     pub fn test() -> Self {
@@ -42,6 +44,8 @@ impl Config {
             load_cell_id: 0,
             gain: 1.0,
             offset: 0.0,
+            location: "Caldo HQ".into(),
+            ingredient: "Fake Chicken Wings".into()
         }
     }
 }
