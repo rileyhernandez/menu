@@ -26,7 +26,7 @@ impl Read for Libra {}
 #[cfg(feature = "generate")]
 impl Generate<'_> for Libra {}
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     #[serde(rename = "phidget-id")]
     pub phidget_id: i32,
