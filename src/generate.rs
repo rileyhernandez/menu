@@ -5,7 +5,7 @@ use std::fs::File;
 use std::io::Write;
 use std::path::Path;
 
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 pub trait Generate<'de> {
     fn from_json(json: &'de str) -> Result<Self, Error>
     where

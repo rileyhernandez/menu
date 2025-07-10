@@ -15,4 +15,4 @@ anyhow = "1.0.98"
 
 [features]
 default = []
-generate = ["dep:reqwest", "dep:serde_json"]
+write = ["dep:reqwest", "dep:serde_json"]

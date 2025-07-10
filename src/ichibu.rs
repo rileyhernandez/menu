@@ -3,9 +3,9 @@ use crate::device::Device;
 use crate::read::Read;
 use serde::{Deserialize, Serialize};
 
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::generate::Generate;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::error::Error;
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -33,7 +33,7 @@ impl ScaleConfig {
     }
 }
 
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Generate<'_> for Ichibu {
     fn to_toml_string(&self) -> Result<String, Error> {
         if self.device.is_none() {
@@ -42,7 +42,7 @@ impl Generate<'_> for Ichibu {
         toml::to_string(self).map_err(Error::TomlGeneration)
     }
 }
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Generate<'_> for ScaleConfig {}
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Read for ScaleConfig {}

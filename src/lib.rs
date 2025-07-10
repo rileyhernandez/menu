@@ -1,14 +1,14 @@
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 pub mod backend;
 pub mod ichibu;
 pub mod ichibu_items;
 pub mod device;
 pub mod error;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 pub mod generate;
 pub mod libra;
 pub mod read;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 pub mod pull;
 
 #[cfg(test)]
@@ -37,7 +37,7 @@ mod tests {
     }
 }
 
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 #[cfg(test)]
 mod generate_tests {
     use std::array;
@@ -81,16 +81,6 @@ mod generate_tests {
     }
     #[test]
     fn libra() -> Result<()> {
-        // let names: [String; 3] = array::from_fn(|i| (i+3).to_string());
-        // for name in names {
-        //     let config = Config::test();
-        //     let device = Device::new(Model::LibraV0, 0);
-        //     let libra = Libra { config, device};
-        //     libra.add_as_table(Path::new(WRITE_PATH), &format!("LibraV0-{}", name))?;
-        // }
-        // let url = CONFIG_PATH;
-        // let libra = Libra::pull_from_backend(Device::new(Model::LibraV0, 0), url)?;
-        // println!("{:?}", libra);
 
         let libras = Libra::read_as_vec(Path::new(WRITE_PATH))?;
         println!("{:?}", libras);

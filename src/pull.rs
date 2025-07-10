@@ -1,8 +1,8 @@
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::error::Error;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use serde::de::DeserializeOwned;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 pub trait FromBackend {
     fn pull(url: &str) -> Result<Self, Error> 
     where 

@@ -1,11 +1,11 @@
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::generate::Generate;
 use serde::{Deserialize, Serialize};
 use crate::device::Device;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::pull::FromBackend;
 use crate::read::Read;
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 use crate::error::Error;
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,7 +13,7 @@ pub struct Libra {
     pub config: Config,
     pub device: Device
 }
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Libra {
     
     pub fn pull_from_backend(device: Device, url: &str) -> Result<Self, Error> {
@@ -23,7 +23,7 @@ impl Libra {
     }
 }
 impl Read for Libra {}
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Generate<'_> for Libra {}
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -50,7 +50,7 @@ impl Config {
     }
 }
 impl Read for Config {}
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl FromBackend for Config {}
-#[cfg(feature = "generate")]
+#[cfg(feature = "write")]
 impl Generate<'_> for Config {}
