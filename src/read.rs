@@ -1,7 +1,7 @@
+use crate::error::Error;
+use serde::Deserialize;
 use std::fs;
 use std::path::Path;
-use serde::Deserialize;
-use crate::error::Error;
 
 pub trait Read {
     fn read(path: &Path) -> Result<Self, Error>

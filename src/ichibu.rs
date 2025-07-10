@@ -1,12 +1,12 @@
-use crate::ichibu_items::*;
 use crate::device::Device;
+use crate::ichibu_items::*;
 use crate::read::Read;
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "write")]
-use crate::generate::Generate;
-#[cfg(feature = "write")]
 use crate::error::Error;
+#[cfg(feature = "write")]
+use crate::generate::Generate;
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct Ichibu {

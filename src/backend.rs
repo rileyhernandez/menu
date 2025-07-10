@@ -2,7 +2,8 @@ use crate::device::Device;
 use crate::error::Error;
 use reqwest;
 
-pub const CONFIG_BACKEND_URL: &str = "https://us-west1-back-of-house-backend.cloudfunctions.net/back-of-house-backend";
+pub const CONFIG_BACKEND_URL: &str =
+    "https://us-west1-back-of-house-backend.cloudfunctions.net/back-of-house-backend";
 pub struct CalibrationBackend {
     path: String,
 }

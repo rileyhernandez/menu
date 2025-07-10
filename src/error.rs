@@ -10,7 +10,7 @@ pub enum Error {
     #[error("Error reading config.toml: {0}")]
     TomlRead(toml::de::Error),
     #[error("Error with file system operation: {0}")]
-    FileSystem(std::io::Error),
+    FileSystem(#[from] std::io::Error),
     #[error("Feature not yet implemented!")]
     NotImplemented,
     #[error("{0}")]
@@ -24,4 +24,8 @@ pub enum Error {
     #[cfg(feature = "write")]
     #[error("Error serializing from backend: {0}")]
     SerdeJson(serde_json::Error),
+    #[error("File Already Exists")]
+    FileExists,
+    #[error("File Does Not Exist")]
+    FileNotFound,
 }

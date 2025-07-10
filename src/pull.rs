@@ -4,9 +4,9 @@ use crate::error::Error;
 use serde::de::DeserializeOwned;
 #[cfg(feature = "write")]
 pub trait FromBackend {
-    fn pull(url: &str) -> Result<Self, Error> 
-    where 
-        Self: Sized + DeserializeOwned
+    fn pull(url: &str) -> Result<Self, Error>
+    where
+        Self: Sized + DeserializeOwned,
     {
         let client = reqwest::blocking::Client::new();
         let response = client
