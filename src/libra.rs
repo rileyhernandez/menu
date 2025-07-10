@@ -77,10 +77,9 @@ impl Read for Libra {}
 impl Generate<'_> for Libra {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
+#[serde(rename_all = "camelCase")]
 pub struct Config {
-    #[serde(rename = "phidget-id")]
     pub phidget_id: i32,
-    #[serde(rename = "load-cell-id")]
     pub load_cell_id: i32,
     pub gain: f64,
     pub offset: f64,
