@@ -28,4 +28,8 @@ pub enum Error {
     FileExists,
     #[error("File Does Not Exist")]
     FileNotFound,
+    #[error("Libra not found in config file!")]
+    LibraNotFound,
+    #[error("Libra already exists in config file!")]
+    LibraAlreadyExists,
 }

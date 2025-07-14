@@ -1,9 +1,3 @@
-#[cfg(feature = "write")]
-use std::fs;
-#[cfg(feature = "write")]
-use std::fs::File;
-#[cfg(feature = "write")]
-use std::io::Write;
 use crate::device::{Device, Model};
 #[cfg(feature = "write")]
 use crate::error::Error;
@@ -13,6 +7,12 @@ use crate::generate::Generate;
 use crate::pull::FromBackend;
 use crate::read::Read;
 use serde::{Deserialize, Serialize};
+#[cfg(feature = "write")]
+use std::fs;
+#[cfg(feature = "write")]
+use std::fs::File;
+#[cfg(feature = "write")]
+use std::io::Write;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Libra {
@@ -28,7 +28,6 @@ impl Libra {
     }
     pub fn new_config_file(libras: Vec<Self>, file_path: &std::path::Path) -> Result<(), Error> {
         if file_path.exists() {
-
             return Err(Error::NotImplemented);
         }
         let map: std::collections::BTreeMap<String, Libra> = libras
@@ -49,18 +48,60 @@ impl Libra {
         Ok(())
     }
     pub fn edit_config_file(self, file_path: &std::path::Path) -> Result<(), Error> {
-
         if !file_path.exists() {
             return Err(Error::FileNotFound);
         }
-        let libras: Vec<Libra> = Libra::read_as_vec(file_path)?.into_iter()
-            .map(|mut libra| {
-                if PartialEq::eq(&libra.device, &self.device) { libra.config = self.config.clone() }
-                Ok(libra)
-        }).collect::<Result<Vec<Libra>, Error>>()?;
-
+        let mut libras_from_file = Libra::read_as_vec(file_path)?;
+        let mut found = false;
+        for libra in libras_from_file.iter_mut() {
+            if PartialEq::eq(&libra.device, &self.device) {
+                libra.config = self.config.clone();
+                found = true;
+                break;
+            }
+        }
+        if !found {
+            return Err(Error::LibraNotFound);
+        }
         fs::remove_file(file_path)?;
-        Libra::new_config_file(libras, file_path)?;
+        Libra::new_config_file(libras_from_file, file_path)?;
+        Ok(())
+    }
+    pub fn add_to_config_file(self, file_path: &std::path::Path) -> Result<(), Error> {
+        if !file_path.exists() {
+            return Err(Error::FileNotFound);
+        }
+        let mut libras_from_file = Libra::read_as_vec(file_path)?;
+        let mut already_exists = false;
+        for libra in libras_from_file.iter_mut() {
+            if PartialEq::eq(&libra.device, &self.device) {
+                already_exists = true;
+                break;
+            }
+        }
+        if already_exists {
+            return Err(Error::LibraAlreadyExists);
+        }
+        fs::remove_file(file_path)?;
+        libras_from_file.push(self);
+        Libra::new_config_file(libras_from_file, file_path)?;
+        Ok(())
+    }
+    pub fn remove_from_config_file(
+        device: Device,
+        file_path: &std::path::Path,
+    ) -> Result<(), Error> {
+        if !file_path.exists() {
+            return Err(Error::FileNotFound);
+        }
+        let mut libras_from_file = Libra::read_as_vec(file_path)?;
+        let original_length = libras_from_file.len();
+        libras_from_file.retain(|x| x.device != device);
+        if original_length == libras_from_file.len() {
+            return Err(Error::LibraNotFound);
+        }
+        fs::remove_file(file_path)?;
+        Libra::new_config_file(libras_from_file, file_path)?;
         Ok(())
     }
 }

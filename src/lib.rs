@@ -54,7 +54,9 @@ mod libra_write_tests {
 
     fn create_test_directory(directory_name: &str) -> Result<PathBuf> {
         let home = env::var("HOME")?;
-        let path = Path::new(&env::var("HOME")?).join(".config").join(directory_name);
+        let path = Path::new(&env::var("HOME")?)
+            .join(".config")
+            .join(directory_name);
         if path.exists() {
             fs::remove_dir_all(&path)?;
         }
@@ -92,6 +94,37 @@ mod libra_write_tests {
 
         let libra_from_new_file = Libra::read_as_vec(&config_path)?;
         assert_eq!(edited_clone, libra_from_new_file);
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+    #[test]
+    fn add_to_config() -> Result<()> {
+        let directory = create_test_directory("add_to_config")?;
+        let config_path = directory.join("config.toml");
+        make_default_config(&config_path)?;
+
+        let mut edited_libra = Libra::default();
+        edited_libra.config.location = "New Location".into();
+        edited_libra.device.number = 15;
+        let edited_clone = edited_libra.clone();
+        edited_libra.add_to_config_file(&config_path)?;
+
+        let mut libra_from_new_file = Libra::read_as_vec(&config_path)?;
+        libra_from_new_file.retain(|x| x.device == edited_clone.device);
+        assert_eq!(vec![edited_clone], libra_from_new_file);
+        fs::remove_dir_all(directory)?;
+        Ok(())
+    }
+    #[test]
+    fn remove_from_config() -> Result<()> {
+        let directory = create_test_directory("remove_from_config")?;
+        let config_path = directory.join("config.toml");
+        make_default_config(&config_path)?;
+
+        Libra::remove_from_config_file(Libra::default().device, &config_path)?;
+
+        let libra_from_new_file = Libra::read_as_vec(&config_path)?;
+        assert_eq!(Vec::<Libra>::new(), libra_from_new_file);
         fs::remove_dir_all(directory)?;
         Ok(())
     }
