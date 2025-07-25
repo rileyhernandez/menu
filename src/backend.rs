@@ -1,9 +1,11 @@
-use crate::device::Device;
+use crate::device::{Device, Model};
 use crate::error::Error;
 use reqwest;
+use reqwest::StatusCode;
+use crate::libra::Config;
 
 pub const CONFIG_BACKEND_URL: &str =
-    "https://us-west1-back-of-house-backend.cloudfunctions.net/back-of-house-backend";
+    "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
 pub struct CalibrationBackend {
     path: String,
 }
@@ -21,16 +23,60 @@ impl CalibrationBackend {
 
 pub struct ConfigBackend {
     path: String,
+    auth_token: String,
 }
 impl ConfigBackend {
-    pub fn new(path: String) -> Self {
-        Self { path }
+    pub fn new(path: String, auth_token: String) -> Self {
+        Self { path, auth_token }
     }
-
-    pub fn get_config(&self, device: Device) -> Result<String, Error> {
+    pub fn make_new_device(&self, model: Model, config: Config) -> Result<Device, Error> {
         let client = reqwest::blocking::Client::new();
-        let url = format!("{}/{}", self.path, device);
-        response_from_client(client, url)
+        let url = format!("{}/{:?}", self.path, model);
+        let response = client
+            .post(url)
+            .bearer_auth(&self.auth_token)
+            .json(&config)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::CREATED {
+            let device: Device = response.json().map_err(Error::Reqwest)?;
+            Ok(device)
+        } else {
+            Err(Error::Backend(response.status()))
+        }
+    }
+    pub fn get_config(&self, device: Device) -> Result<Config, Error> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+        let response = client
+            .get(url)
+            .bearer_auth(&self.auth_token)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::OK {
+            let config: Config = response.json().map_err(Error::Reqwest)?;
+            Ok(config)
+        } else {
+            Err(Error::Backend(response.status()))
+        }
+    }
+    pub fn edit_config(&self, device: Device, config: Config) -> Result<(), Error> {
+        let client = reqwest::blocking::Client::new();
+        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+        let response = client
+            .put(url)
+            .bearer_auth(&self.auth_token)
+            .json(&config)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::OK {
+            Ok(())
+        } else {
+            Err(Error::Backend(response.status()))
+        }
     }
 }
 

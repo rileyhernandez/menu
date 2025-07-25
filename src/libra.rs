@@ -118,7 +118,6 @@ impl Read for Libra {}
 impl Generate<'_> for Libra {}
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-#[serde(rename_all = "camelCase")]
 pub struct Config {
     pub phidget_id: i32,
     pub load_cell_id: i32,

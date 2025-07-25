@@ -32,4 +32,9 @@ pub enum Error {
     LibraNotFound,
     #[error("Libra already exists in config file!")]
     LibraAlreadyExists,
+    #[error("Couldn't access environment variable: {0}")]
+    Env(#[from] std::env::VarError),
+    #[cfg(feature = "write")]
+    #[error("Backend Error: {0:?}")]
+    Backend(reqwest::StatusCode)
 }

@@ -53,7 +53,6 @@ mod libra_write_tests {
     use std::{env, fs};
 
     fn create_test_directory(directory_name: &str) -> Result<PathBuf> {
-        let home = env::var("HOME")?;
         let path = Path::new(&env::var("HOME")?)
             .join(".config")
             .join(directory_name);
@@ -76,7 +75,6 @@ mod libra_write_tests {
         make_default_config(&config_path)?;
 
         let model_libra = vec![Libra::default()];
-        let generated_libras = Libra::read_as_vec(&config_path)?;
         assert_eq!(model_libra, Libra::read_as_vec(&config_path)?);
         fs::remove_dir_all(directory)?;
         Ok(())
@@ -132,31 +130,47 @@ mod libra_write_tests {
 
 #[cfg(feature = "write")]
 #[cfg(test)]
-mod generate_tests {
-    use crate::backend::{CONFIG_BACKEND_URL, CalibrationBackend, ConfigBackend};
-    use crate::device::Device;
-    use crate::device::Model;
-    use crate::generate::Generate;
-    use crate::ichibu::{Ichibu, ScaleConfig};
-    use crate::libra::{Config, Libra};
-    use crate::pull::FromBackend;
-    use crate::read::Read;
+mod backend_tests {
+    use std::env;
     use anyhow::Result;
-    use std::array;
-    use std::path::Path;
+    use crate::backend::{ConfigBackend, CONFIG_BACKEND_URL};
+    use crate::device::{Device, Model};
+    use crate::libra::Config;
 
-    const READ_PATH: &str = "config.toml";
-    const WRITE_PATH: &str = "/home/riley/Downloads/test/config.toml";
-    const CALIBRATION_PATH: &str =
-        "https://us-west1-calibration-backend.cloudfunctions.net/test-function";
-    const CONFIG_PATH: &str = "http://127.0.0.1:8080";
+    // const TEST_BACKEND_URL: &str = "http://localhost:8080";
 
-    // #[test]
-    // fn generate() -> Result<()> {
-    //     let mut config = Ichibu::read(Path::new(READ_PATH))?;
-    //     config.overwrite_toml(Path::new(WRITE_PATH))?;
-    //     Ok(())
-    // }
+    fn get_auth_token_from_env() -> Result<String> {
+        let token = env::var("AUTH_TOKEN")?;
+        Ok(token)
+    }
+
+    #[test]
+    fn make_new_device() -> Result<()> {
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = get_auth_token_from_env()?;
+        let backend = ConfigBackend::new(CONFIG_BACKEND_URL.into(), token);
+        let new_device = backend.make_new_device(model, config.clone())?;
+
+        let received_config = backend.get_config(new_device)?;
+        assert_eq!(config, received_config);
+        Ok(())
+    }
+    #[test]
+    fn edit_device_config() -> Result<()> {
+        let model = Model::LibraV0;
+        let mut config = Config::default();
+        let token = get_auth_token_from_env()?;
+        let backend = ConfigBackend::new(CONFIG_BACKEND_URL.into(), token);
+        let device = backend.make_new_device(model, config.clone())?;
+
+        config.location = "New Location".into();
+        backend.edit_config(device.clone(), config.clone())?;
+
+        let received_config = backend.get_config(device)?;
+        assert_eq!(config, received_config);
+        Ok(())
+    }
     // #[test]
     // fn calibration_backend() -> Result<()> {
     //     let backend = CalibrationBackend::new(CALIBRATION_PATH.into());
