@@ -20,7 +20,7 @@ impl CalibrationBackend {
         response_from_client(client, url)
     }
 }
-
+#[derive(Clone)]
 pub struct ConfigBackend {
     path: String,
     auth_token: String,
