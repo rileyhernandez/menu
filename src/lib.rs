@@ -131,19 +131,15 @@ mod libra_write_tests {
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod backend_tests {
-    use std::env;
-    use anyhow::Result;
-    use crate::backend::{ConfigBackend, CONFIG_BACKEND_URL};
+    use crate::backend::{CONFIG_BACKEND_URL, ConfigBackend};
     use crate::device::{Device, Model};
     use crate::libra::Config;
-
-    // const TEST_BACKEND_URL: &str = "http://localhost:8080";
-
+    use anyhow::Result;
+    use std::env;
     fn get_auth_token_from_env() -> Result<String> {
         let token = env::var("AUTH_TOKEN")?;
         Ok(token)
     }
-
     #[test]
     fn make_new_device() -> Result<()> {
         let model = Model::LibraV0;
@@ -171,27 +167,44 @@ mod backend_tests {
         assert_eq!(config, received_config);
         Ok(())
     }
-    // #[test]
-    // fn calibration_backend() -> Result<()> {
-    //     let backend = CalibrationBackend::new(CALIBRATION_PATH.into());
-    //     let payload = backend.get_config(69420)?;
-    //     println!("{:?}", payload);
-    //     Ok(())
-    // }
-    // #[test]
-    // fn config_backend() -> Result<()> {
-    //     let backend = ConfigBackend::new(CONFIG_PATH.into());
-    //     let device = Device::new(Model::IchibuV2, 0);
-    //     let payload = backend.get_config(device)?;
-    //     println!("{:?}", payload);
-    //     Ok(())
-    // }
-    // #[test]
-    // fn libra() -> Result<()> {
-    //
-    //     let libras = Libra::read_as_vec(Path::new(WRITE_PATH))?;
-    //     println!("{:?}", libras);
-    //
-    //     Ok(())
-    // }
+}
+#[cfg(feature = "write")]
+#[cfg(test)]
+mod async_backend_tests {
+    use crate::backend::{CONFIG_BACKEND_URL, ConfigBackend};
+    use crate::device::{Device, Model};
+    use crate::libra::Config;
+    use anyhow::Result;
+    use std::env;
+    fn get_auth_token_from_env() -> Result<String> {
+        let token = env::var("AUTH_TOKEN")?;
+        Ok(token)
+    }
+    #[tokio::test]
+    async fn make_new_device() -> Result<()> {
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = get_auth_token_from_env()?;
+        let backend = ConfigBackend::new(CONFIG_BACKEND_URL.into(), token);
+        let new_device = backend.make_new_device_async(model, config.clone()).await?;
+
+        let received_config = backend.get_config_async(new_device).await?;
+        assert_eq!(config, received_config);
+        Ok(())
+    }
+    #[tokio::test]
+    async fn edit_device_config() -> Result<()> {
+        let model = Model::LibraV0;
+        let mut config = Config::default();
+        let token = get_auth_token_from_env()?;
+        let backend = ConfigBackend::new(CONFIG_BACKEND_URL.into(), token);
+        let device = backend.make_new_device_async(model, config.clone()).await?;
+
+        config.location = "New Location".into();
+        backend.edit_config_async(device.clone(), config.clone()).await?;
+
+        let received_config = backend.get_config_async(device).await?;
+        assert_eq!(config, received_config);
+        Ok(())
+    }
 }

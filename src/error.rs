@@ -36,5 +36,5 @@ pub enum Error {
     Env(#[from] std::env::VarError),
     #[cfg(feature = "write")]
     #[error("Backend Error: {0:?}")]
-    Backend(reqwest::StatusCode)
+    Backend(reqwest::StatusCode),
 }

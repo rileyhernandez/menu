@@ -1,8 +1,8 @@
 use crate::device::{Device, Model};
 use crate::error::Error;
+use crate::libra::Config;
 use reqwest;
 use reqwest::StatusCode;
-use crate::libra::Config;
 
 pub const CONFIG_BACKEND_URL: &str =
     "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
@@ -71,6 +71,62 @@ impl ConfigBackend {
             .json(&config)
             .timeout(std::time::Duration::from_secs(60))
             .send()
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::OK {
+            Ok(())
+        } else {
+            Err(Error::Backend(response.status()))
+        }
+    }
+    pub async fn make_new_device_async(
+        &self,
+        model: Model,
+        config: Config,
+    ) -> Result<Device, Error> {
+        let client = reqwest::Client::new();
+        let url = format!("{}/{:?}", self.path, model);
+        let response = client
+            .post(url)
+            .bearer_auth(&self.auth_token)
+            .json(&config)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .await
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::CREATED {
+            let device: Device = response.json().await.map_err(Error::Reqwest)?;
+            Ok(device)
+        } else {
+            Err(Error::Backend(response.status()))
+        }
+    }
+    pub async fn get_config_async(&self, device: Device) -> Result<Config, Error> {
+        let client = reqwest::Client::new();
+        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+        let response = client
+            .get(url)
+            .bearer_auth(&self.auth_token)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .await
+            .map_err(Error::Reqwest)?;
+        if response.status() == StatusCode::OK {
+            let config: Config = response.json().await.map_err(Error::Reqwest)?;
+            Ok(config)
+        } else {
+            Err(Error::Backend(response.status()))
+        }
+    }
+    pub async fn edit_config_async(&self, device: Device, config: Config) -> Result<(), Error> {
+        let client = reqwest::Client::new();
+        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+        let response = client
+            .put(url)
+            .bearer_auth(&self.auth_token)
+            .json(&config)
+            .timeout(std::time::Duration::from_secs(60))
+            .send()
+            .await
             .map_err(Error::Reqwest)?;
         if response.status() == StatusCode::OK {
             Ok(())
