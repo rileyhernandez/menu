@@ -11,42 +11,11 @@ pub mod libra;
 pub mod pull;
 pub mod read;
 
-#[cfg(test)]
-mod tests {
-    use crate::ichibu::Ichibu;
-    use crate::libra::Config;
-    use crate::read::Read;
-    use anyhow::Result;
-    use std::path::Path;
-
-    const READ_PATH: &str = "config.toml";
-    const WRITE_PATH: &str = "/home/riley/Downloads/test/config.toml";
-
-    // #[test]
-    // fn load() -> Result<()> {
-    //     let config = Ichibu::read(Path::new(READ_PATH));
-    //     println!("{:?}", config?);
-    //
-    //     Ok(())
-    // }
-    // #[test]
-    // fn load_libra() -> Result<()> {
-    //     let config = Config::read_as_vec(Path::new(WRITE_PATH));
-    //     println!("{:?}", config?);
-    //     Ok(())
-    // }
-}
 
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod libra_write_tests {
-    use crate::backend::{CONFIG_BACKEND_URL, CalibrationBackend, ConfigBackend};
-    use crate::device::Device;
-    use crate::device::Model;
-    use crate::generate::Generate;
-    use crate::ichibu::{Ichibu, ScaleConfig};
-    use crate::libra::{Config, Libra};
-    use crate::pull::FromBackend;
+    use crate::libra::Libra;
     use crate::read::Read;
     use anyhow::Result;
     use std::path::{Path, PathBuf};
@@ -131,8 +100,8 @@ mod libra_write_tests {
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod backend_tests {
-    use crate::backend::{CONFIG_BACKEND_URL, ConfigBackend};
-    use crate::device::{Device, Model};
+    use crate::backend::{ConfigBackend, CONFIG_BACKEND_URL};
+    use crate::device::Model;
     use crate::libra::Config;
     use anyhow::Result;
     use std::env;
@@ -171,8 +140,8 @@ mod backend_tests {
 #[cfg(feature = "write")]
 #[cfg(test)]
 mod async_backend_tests {
-    use crate::backend::{CONFIG_BACKEND_URL, ConfigBackend};
-    use crate::device::{Device, Model};
+    use crate::backend::{ConfigBackend, CONFIG_BACKEND_URL};
+    use crate::device::Model;
     use crate::libra::Config;
     use anyhow::Result;
     use std::env;

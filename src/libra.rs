@@ -13,6 +13,7 @@ use std::fs;
 use std::fs::File;
 #[cfg(feature = "write")]
 use std::io::Write;
+use std::time::Duration;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Clone)]
 pub struct Libra {
@@ -125,6 +126,10 @@ pub struct Config {
     pub offset: f64,
     pub location: String,
     pub ingredient: String,
+    pub heartbeat_period: Duration,
+    pub buffer_length: usize,
+    pub max_noise: f64,
+    pub phidget_sample_period: Duration,
 }
 impl Default for Config {
     fn default() -> Self {
@@ -135,6 +140,10 @@ impl Default for Config {
             offset: 0.0,
             location: "Caldo HQ".into(),
             ingredient: "Fake Chicken Wings".into(),
+            heartbeat_period: Duration::from_secs(60),
+            buffer_length: 20,
+            max_noise: 3.,
+            phidget_sample_period: Duration::from_millis(250),
         }
     }
 }
