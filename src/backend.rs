@@ -6,6 +6,7 @@ use reqwest::StatusCode;
 
 pub const CONFIG_BACKEND_URL: &str =
     "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
+// "http://localhost:8080/";
 pub struct CalibrationBackend {
     path: String,
 }
@@ -144,4 +145,330 @@ fn response_from_client(client: reqwest::blocking::Client, url: String) -> Resul
         .map_err(Error::Reqwest)?
         .text()
         .map_err(Error::Reqwest)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::device::{Device, Model};
+    use crate::libra::Config;
+    use mockito;
+    use serde_json;
+    #[test]
+    fn test_config_backend_make_new_device_success() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = "test-token";
+
+        let expected_device = Device::new(model.clone(), 1);
+        let mock = server
+            .mock("POST", &format!("/{:?}", model)[..])
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_header("authorization", "Bearer test-token")
+            .with_body(serde_json::to_string(&expected_device).unwrap())
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.make_new_device(model, config);
+
+        mock.assert();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected_device);
+    }
+
+    #[test]
+    fn test_config_backend_make_new_device_error() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("POST", &format!("/{:?}", model)[..])
+            .with_status(400)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.make_new_device(model, config);
+
+        mock.assert();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::BAD_REQUEST),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
+
+    #[test]
+    fn test_config_backend_get_config_success() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let token = "test-token";
+        let expected_config = Config::default();
+
+        let mock = server
+            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_header("authorization", "Bearer test-token")
+            .with_body(serde_json::to_string(&expected_config).unwrap())
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.get_config(device);
+
+        mock.assert();
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected_config);
+    }
+
+    #[test]
+    fn test_config_backend_get_config_error() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let token = "test-token";
+
+        let mock = server
+            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(404)
+            .with_header("authorization", "Bearer test-token")
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.get_config(device);
+
+        mock.assert();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::NOT_FOUND),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
+
+    #[test]
+    fn test_config_backend_edit_config_success() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(200)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.edit_config(device, config);
+
+        mock.assert();
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_config_backend_edit_config_error() {
+        let mut server = mockito::Server::new();
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(500)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create();
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.edit_config(device, config);
+
+        mock.assert();
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_make_new_device_async_success() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = "test-token";
+
+        let expected_device = Device::new(model.clone(), 1);
+        let mock = server
+            .mock("POST", &format!("/{:?}", model)[..])
+            .with_status(201)
+            .with_header("content-type", "application/json")
+            .with_header("authorization", "Bearer test-token")
+            .with_body(serde_json::to_string(&expected_device).unwrap())
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.make_new_device_async(model, config).await;
+
+        mock.assert_async().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected_device);
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_make_new_device_async_error() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let model = Model::LibraV0;
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("POST", &format!("/{:?}", model)[..])
+            .with_status(400)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.make_new_device_async(model, config).await;
+
+        mock.assert_async().await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::BAD_REQUEST),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_get_config_async_success() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let token = "test-token";
+        let expected_config = Config::default();
+
+        let mock = server
+            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_header("authorization", "Bearer test-token")
+            .with_body(serde_json::to_string(&expected_config).unwrap())
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.get_config_async(device).await;
+
+        mock.assert_async().await;
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), expected_config);
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_get_config_async_error() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let token = "test-token";
+
+        let mock = server
+            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(404)
+            .with_header("authorization", "Bearer test-token")
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.get_config_async(device).await;
+
+        mock.assert_async().await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::NOT_FOUND),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_edit_config_async_success() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(200)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.edit_config_async(device, config).await;
+
+        mock.assert_async().await;
+        assert!(result.is_ok());
+    }
+
+    #[tokio::test]
+    async fn test_config_backend_edit_config_async_error() {
+        let mut server = mockito::Server::new_async().await;
+        let url = server.url();
+        let device = Device::new(Model::LibraV0, 1);
+        let config = Config::default();
+        let token = "test-token";
+
+        let mock = server
+            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .with_status(500)
+            .with_header("authorization", "Bearer test-token")
+            .match_body(mockito::Matcher::Json(
+                serde_json::to_value(&config).unwrap(),
+            ))
+            .create_async()
+            .await;
+
+        let backend = ConfigBackend::new(url.to_string(), token.to_string());
+        let result = backend.edit_config_async(device, config).await;
+
+        mock.assert_async().await;
+        assert!(result.is_err());
+        match result.unwrap_err() {
+            Error::Backend(status) => assert_eq!(status, StatusCode::INTERNAL_SERVER_ERROR),
+            other_err => panic!("Expected Error::Backend, got {:?}", other_err),
+        }
+    }
 }
