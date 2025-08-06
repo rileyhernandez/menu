@@ -1,26 +1,6 @@
-use crate::device::{Device, Model};
-use crate::error::Error;
-use crate::libra::Config;
-use reqwest;
-use reqwest::StatusCode;
-
-pub const CONFIG_BACKEND_URL: &str =
+pub const BACKEND_URL: &str =
     "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
 // "http://localhost:8080/";
-pub struct CalibrationBackend {
-    path: String,
-}
-impl CalibrationBackend {
-    pub fn new(path: String) -> Self {
-        Self { path }
-    }
-
-    pub fn get_config(&self, phidget_id: isize) -> Result<String, Error> {
-        let client = reqwest::blocking::Client::new();
-        let url = format!("{}/{}", self.path, phidget_id);
-        response_from_client(client, url)
-    }
-}
 #[derive(Clone)]
 pub struct ConfigBackend {
     path: String,
@@ -30,130 +10,211 @@ impl ConfigBackend {
     pub fn new(path: String, auth_token: String) -> Self {
         Self { path, auth_token }
     }
-    pub fn make_new_device(&self, model: Model, config: Config) -> Result<Device, Error> {
-        let client = reqwest::blocking::Client::new();
-        let url = format!("{}/{:?}", self.path, model);
-        let response = client
-            .post(url)
-            .bearer_auth(&self.auth_token)
-            .json(&config)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::CREATED {
-            let device: Device = response.json().map_err(Error::Reqwest)?;
-            Ok(device)
-        } else {
-            Err(Error::Backend(response.status()))
+}
+
+#[cfg(feature = "write")]
+pub mod write {
+    use reqwest::StatusCode;
+    pub(crate) use crate::backend::ConfigBackend;
+    use crate::device::{Device, Model};
+    use crate::error::Error;
+    use crate::libra::Config;
+
+    impl ConfigBackend {
+        pub fn make_new_device(&self, model: Model, config: Config) -> Result<Device, Error> {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/{:?}", self.path, model);
+            let response = client
+                .post(url)
+                .bearer_auth(&self.auth_token)
+                .json(&config)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::CREATED {
+                let device: Device = response.json().map_err(Error::Reqwest)?;
+                Ok(device)
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
-    }
-    pub fn get_config(&self, device: Device) -> Result<Config, Error> {
-        let client = reqwest::blocking::Client::new();
-        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
-        let response = client
-            .get(url)
-            .bearer_auth(&self.auth_token)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::OK {
-            let config: Config = response.json().map_err(Error::Reqwest)?;
-            Ok(config)
-        } else {
-            Err(Error::Backend(response.status()))
+        pub fn get_config(&self, device: Device) -> Result<Config, Error> {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let response = client
+                .get(url)
+                .bearer_auth(&self.auth_token)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                let config: Config = response.json().map_err(Error::Reqwest)?;
+                Ok(config)
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
-    }
-    pub fn edit_config(&self, device: Device, config: Config) -> Result<(), Error> {
-        let client = reqwest::blocking::Client::new();
-        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
-        let response = client
-            .put(url)
-            .bearer_auth(&self.auth_token)
-            .json(&config)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::OK {
-            Ok(())
-        } else {
-            Err(Error::Backend(response.status()))
+        pub fn edit_config(&self, device: Device, config: Config) -> Result<(), Error> {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let response = client
+                .put(url)
+                .bearer_auth(&self.auth_token)
+                .json(&config)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                Ok(())
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
-    }
-    pub async fn make_new_device_async(
-        &self,
-        model: Model,
-        config: Config,
-    ) -> Result<Device, Error> {
-        let client = reqwest::Client::new();
-        let url = format!("{}/{:?}", self.path, model);
-        let response = client
-            .post(url)
-            .bearer_auth(&self.auth_token)
-            .json(&config)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .await
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::CREATED {
-            let device: Device = response.json().await.map_err(Error::Reqwest)?;
-            Ok(device)
-        } else {
-            Err(Error::Backend(response.status()))
+        pub async fn make_new_device_async(
+            &self,
+            model: Model,
+            config: Config,
+        ) -> Result<Device, Error> {
+            let client = reqwest::Client::new();
+            let url = format!("{}/{:?}", self.path, model);
+            let response = client
+                .post(url)
+                .bearer_auth(&self.auth_token)
+                .json(&config)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .await
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::CREATED {
+                let device: Device = response.json().await.map_err(Error::Reqwest)?;
+                Ok(device)
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
-    }
-    pub async fn get_config_async(&self, device: Device) -> Result<Config, Error> {
-        let client = reqwest::Client::new();
-        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
-        let response = client
-            .get(url)
-            .bearer_auth(&self.auth_token)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .await
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::OK {
-            let config: Config = response.json().await.map_err(Error::Reqwest)?;
-            Ok(config)
-        } else {
-            Err(Error::Backend(response.status()))
+        pub async fn get_config_async(&self, device: Device) -> Result<Config, Error> {
+            let client = reqwest::Client::new();
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let response = client
+                .get(url)
+                .bearer_auth(&self.auth_token)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .await
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                let config: Config = response.json().await.map_err(Error::Reqwest)?;
+                Ok(config)
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
-    }
-    pub async fn edit_config_async(&self, device: Device, config: Config) -> Result<(), Error> {
-        let client = reqwest::Client::new();
-        let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
-        let response = client
-            .put(url)
-            .bearer_auth(&self.auth_token)
-            .json(&config)
-            .timeout(std::time::Duration::from_secs(60))
-            .send()
-            .await
-            .map_err(Error::Reqwest)?;
-        if response.status() == StatusCode::OK {
-            Ok(())
-        } else {
-            Err(Error::Backend(response.status()))
+        pub async fn edit_config_async(&self, device: Device, config: Config) -> Result<(), Error> {
+            let client = reqwest::Client::new();
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let response = client
+                .put(url)
+                .bearer_auth(&self.auth_token)
+                .json(&config)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .await
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                Ok(())
+            } else {
+                Err(Error::Backend(response.status()))
+            }
         }
     }
 }
 
-fn response_from_client(client: reqwest::blocking::Client, url: String) -> Result<String, Error> {
-    client
-        .get(url)
-        .timeout(std::time::Duration::from_secs(60))
-        .send()
-        .map_err(Error::Reqwest)?
-        .text()
-        .map_err(Error::Reqwest)
+#[cfg(feature = "address")]
+pub mod address {
+    use reqwest::StatusCode;
+    use serde::{Deserialize, Serialize};
+    use crate::backend::ConfigBackend;
+    use crate::device::Device;
+    use crate::error::Error;
+
+    impl ConfigBackend {
+        pub fn get_address(&self, device: Device) -> Result<String, Error> {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/{}/{:?}/{}", self.path, "address", device.model, device.number);
+            let response = client
+                .get(url)
+                .bearer_auth(&self.auth_token)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                let response: AddressResponse = response.json().map_err(Error::Reqwest)?;
+                Ok(response.address)
+            } else {
+                Err(Error::Backend(response.status()))
+            }
+        }
+        pub fn put_address(&self, device: Device, address: String) -> Result<(), Error> {
+            let client = reqwest::blocking::Client::new();
+            let url = format!("{}/{}/{:?}/{}", self.path, "address", device.model, device.number);
+            let response = client
+                .put(url)
+                .json(&AddressResponse { address })
+                .bearer_auth(&self.auth_token)
+                .timeout(std::time::Duration::from_secs(60))
+                .send()
+                .map_err(Error::Reqwest)?;
+            if response.status() == StatusCode::OK {
+                Ok(())
+            } else {
+                Err(Error::Backend(response.status()))
+            }
+        }
+    }
+    #[derive(Deserialize, Serialize)]
+    struct AddressResponse {
+        address: String
+    }
 }
 
+
+// pub struct CalibrationBackend {
+//     path: String,
+// }
+// impl CalibrationBackend {
+//     pub fn new(path: String) -> Self {
+//         Self { path }
+//     }
+//
+//     pub fn get_config(&self, phidget_id: isize) -> Result<String, Error> {
+//         let client = reqwest::blocking::Client::new();
+//         let url = format!("{}/{}", self.path, phidget_id);
+//         response_from_client(client, url)
+//     }
+// }
+//
+//
+// fn response_from_client(client: reqwest::blocking::Client, url: String) -> Result<String, Error> {
+//     client
+//         .get(url)
+//         .timeout(std::time::Duration::from_secs(60))
+//         .send()
+//         .map_err(Error::Reqwest)?
+//         .text()
+//         .map_err(Error::Reqwest)
+// }
+
+#[cfg(any(feature = "write", feature = "address"))]
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::device::{Device, Model};
     use crate::libra::Config;
     use mockito;
+    use reqwest::StatusCode;
     use serde_json;
+    use crate::error::Error;
+
     #[test]
     fn test_config_backend_make_new_device_success() {
         let mut server = mockito::Server::new();

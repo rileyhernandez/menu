@@ -1,4 +1,3 @@
-#[cfg(feature = "write")]
 pub mod backend;
 pub mod device;
 pub mod error;

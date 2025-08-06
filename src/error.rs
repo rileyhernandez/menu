@@ -1,4 +1,4 @@
-#[cfg(feature = "write")]
+#[cfg(any(feature = "write", feature = "address"))]
 use reqwest;
 use thiserror::Error;
 use toml;
@@ -15,7 +15,7 @@ pub enum Error {
     NotImplemented,
     #[error("{0}")]
     Custom(String),
-    #[cfg(feature = "write")]
+    #[cfg(any(feature = "write", feature = "address"))]
     #[error("Error reaching backend: {0}")]
     Reqwest(reqwest::Error),
     #[cfg(feature = "write")]
@@ -34,7 +34,7 @@ pub enum Error {
     LibraAlreadyExists,
     #[error("Couldn't access environment variable: {0}")]
     Env(#[from] std::env::VarError),
-    #[cfg(feature = "write")]
+    #[cfg(any(feature = "write", feature = "address"))]
     #[error("Backend Error: {0:?}")]
     Backend(reqwest::StatusCode),
 }
