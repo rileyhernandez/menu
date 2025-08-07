@@ -182,7 +182,6 @@ pub mod address {
     }
 }
 
-
 #[cfg(any(feature = "write", feature = "address"))]
 #[cfg(test)]
 mod tests {

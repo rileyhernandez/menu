@@ -10,7 +10,10 @@ pub struct Device {
 
 impl Device {
     pub fn new(model: Model, serial_number: &str) -> Self {
-        Self { model, serial_number: serial_number.to_string() }
+        Self {
+            model,
+            serial_number: serial_number.to_string(),
+        }
     }
 }
 impl fmt::Display for Device {
