@@ -1,5 +1,7 @@
 # Menu
 
+![Rust CI](https://github.com/rileyhernandez/menu/workflows/Rust%20CI/badge.svg)
+
 A Rust configuration management library for Caldo's kitchen automation devices.
 
 ## Overview
