@@ -1,10 +1,9 @@
-pub const BACKEND_URL: &str =
-    "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
-// "http://localhost:8080/";
+pub const BACKEND_URL: &str = "https://us-west1-back-of-house-backend.cloudfunctions.net/mise/";
+
 #[derive(Clone)]
 pub struct ConfigBackend {
-    path: String,
-    auth_token: String,
+    pub path: String,
+    pub auth_token: String,
 }
 impl ConfigBackend {
     pub fn new(path: String, auth_token: String) -> Self {
@@ -14,11 +13,11 @@ impl ConfigBackend {
 
 #[cfg(feature = "write")]
 pub mod write {
-    use reqwest::StatusCode;
     pub(crate) use crate::backend::ConfigBackend;
     use crate::device::{Device, Model};
     use crate::error::Error;
     use crate::libra::Config;
+    use reqwest::StatusCode;
 
     impl ConfigBackend {
         pub fn make_new_device(&self, model: Model, config: Config) -> Result<Device, Error> {
@@ -40,7 +39,7 @@ pub mod write {
         }
         pub fn get_config(&self, device: Device) -> Result<Config, Error> {
             let client = reqwest::blocking::Client::new();
-            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.serial_number);
             let response = client
                 .get(url)
                 .bearer_auth(&self.auth_token)
@@ -56,7 +55,7 @@ pub mod write {
         }
         pub fn edit_config(&self, device: Device, config: Config) -> Result<(), Error> {
             let client = reqwest::blocking::Client::new();
-            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.serial_number);
             let response = client
                 .put(url)
                 .bearer_auth(&self.auth_token)
@@ -94,7 +93,7 @@ pub mod write {
         }
         pub async fn get_config_async(&self, device: Device) -> Result<Config, Error> {
             let client = reqwest::Client::new();
-            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.serial_number);
             let response = client
                 .get(url)
                 .bearer_auth(&self.auth_token)
@@ -111,7 +110,7 @@ pub mod write {
         }
         pub async fn edit_config_async(&self, device: Device, config: Config) -> Result<(), Error> {
             let client = reqwest::Client::new();
-            let url = format!("{}/{:?}/{}", self.path, device.model, device.number);
+            let url = format!("{}/{:?}/{}", self.path, device.model, device.serial_number);
             let response = client
                 .put(url)
                 .bearer_auth(&self.auth_token)
@@ -131,16 +130,19 @@ pub mod write {
 
 #[cfg(feature = "address")]
 pub mod address {
-    use reqwest::StatusCode;
-    use serde::{Deserialize, Serialize};
     use crate::backend::ConfigBackend;
     use crate::device::Device;
     use crate::error::Error;
+    use reqwest::StatusCode;
+    use serde::{Deserialize, Serialize};
 
     impl ConfigBackend {
         pub fn get_address(&self, device: Device) -> Result<String, Error> {
             let client = reqwest::blocking::Client::new();
-            let url = format!("{}/{}/{:?}/{}", self.path, "address", device.model, device.number);
+            let url = format!(
+                "{}/{}/{:?}/{}",
+                self.path, "address", device.model, device.serial_number
+            );
             let response = client
                 .get(url)
                 .bearer_auth(&self.auth_token)
@@ -156,7 +158,10 @@ pub mod address {
         }
         pub fn put_address(&self, device: Device, address: String) -> Result<(), Error> {
             let client = reqwest::blocking::Client::new();
-            let url = format!("{}/{}/{:?}/{}", self.path, "address", device.model, device.number);
+            let url = format!(
+                "{}/{}/{:?}/{}",
+                self.path, "address", device.model, device.serial_number
+            );
             let response = client
                 .put(url)
                 .json(&AddressResponse { address })
@@ -173,47 +178,21 @@ pub mod address {
     }
     #[derive(Deserialize, Serialize)]
     struct AddressResponse {
-        address: String
+        address: String,
     }
 }
 
-
-// pub struct CalibrationBackend {
-//     path: String,
-// }
-// impl CalibrationBackend {
-//     pub fn new(path: String) -> Self {
-//         Self { path }
-//     }
-//
-//     pub fn get_config(&self, phidget_id: isize) -> Result<String, Error> {
-//         let client = reqwest::blocking::Client::new();
-//         let url = format!("{}/{}", self.path, phidget_id);
-//         response_from_client(client, url)
-//     }
-// }
-//
-//
-// fn response_from_client(client: reqwest::blocking::Client, url: String) -> Result<String, Error> {
-//     client
-//         .get(url)
-//         .timeout(std::time::Duration::from_secs(60))
-//         .send()
-//         .map_err(Error::Reqwest)?
-//         .text()
-//         .map_err(Error::Reqwest)
-// }
 
 #[cfg(any(feature = "write", feature = "address"))]
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::device::{Device, Model};
+    use crate::error::Error;
     use crate::libra::Config;
     use mockito;
     use reqwest::StatusCode;
     use serde_json;
-    use crate::error::Error;
 
     #[test]
     fn test_config_backend_make_new_device_success() {
@@ -223,7 +202,7 @@ mod tests {
         let config = Config::default();
         let token = "test-token";
 
-        let expected_device = Device::new(model.clone(), 1);
+        let expected_device = Device::new(model.clone(), "Lib1");
         let mock = server
             .mock("POST", &format!("/{:?}", model)[..])
             .with_status(201)
@@ -275,12 +254,15 @@ mod tests {
     fn test_config_backend_get_config_success() {
         let mut server = mockito::Server::new();
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let token = "test-token";
         let expected_config = Config::default();
 
         let mock = server
-            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "GET",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_header("authorization", "Bearer test-token")
@@ -299,11 +281,14 @@ mod tests {
     fn test_config_backend_get_config_error() {
         let mut server = mockito::Server::new();
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let token = "test-token";
 
         let mock = server
-            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "GET",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(404)
             .with_header("authorization", "Bearer test-token")
             .create();
@@ -323,12 +308,15 @@ mod tests {
     fn test_config_backend_edit_config_success() {
         let mut server = mockito::Server::new();
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let config = Config::default();
         let token = "test-token";
 
         let mock = server
-            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "PUT",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(200)
             .with_header("authorization", "Bearer test-token")
             .match_body(mockito::Matcher::Json(
@@ -347,12 +335,15 @@ mod tests {
     fn test_config_backend_edit_config_error() {
         let mut server = mockito::Server::new();
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let config = Config::default();
         let token = "test-token";
 
         let mock = server
-            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "PUT",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(500)
             .with_header("authorization", "Bearer test-token")
             .match_body(mockito::Matcher::Json(
@@ -379,7 +370,7 @@ mod tests {
         let config = Config::default();
         let token = "test-token";
 
-        let expected_device = Device::new(model.clone(), 1);
+        let expected_device = Device::new(model.clone(), "L1");
         let mock = server
             .mock("POST", &format!("/{:?}", model)[..])
             .with_status(201)
@@ -433,12 +424,15 @@ mod tests {
     async fn test_config_backend_get_config_async_success() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let token = "test-token";
         let expected_config = Config::default();
 
         let mock = server
-            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "GET",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(200)
             .with_header("content-type", "application/json")
             .with_header("authorization", "Bearer test-token")
@@ -458,11 +452,14 @@ mod tests {
     async fn test_config_backend_get_config_async_error() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let token = "test-token";
 
         let mock = server
-            .mock("GET", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "GET",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(404)
             .with_header("authorization", "Bearer test-token")
             .create_async()
@@ -483,12 +480,15 @@ mod tests {
     async fn test_config_backend_edit_config_async_success() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let config = Config::default();
         let token = "test-token";
 
         let mock = server
-            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "PUT",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(200)
             .with_header("authorization", "Bearer test-token")
             .match_body(mockito::Matcher::Json(
@@ -508,12 +508,15 @@ mod tests {
     async fn test_config_backend_edit_config_async_error() {
         let mut server = mockito::Server::new_async().await;
         let url = server.url();
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let config = Config::default();
         let token = "test-token";
 
         let mock = server
-            .mock("PUT", &format!("/{:?}/{}", device.model, device.number)[..])
+            .mock(
+                "PUT",
+                &format!("/{:?}/{}", device.model, device.serial_number)[..],
+            )
             .with_status(500)
             .with_header("authorization", "Bearer test-token")
             .match_body(mockito::Matcher::Json(

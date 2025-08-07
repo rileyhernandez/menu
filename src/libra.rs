@@ -103,7 +103,7 @@ impl Default for Libra {
     fn default() -> Self {
         Self {
             config: Config::default(),
-            device: Device::new(Model::LibraV0, 0),
+            device: Device::new(Model::LibraV0, "Lib0"),
         }
     }
 }
@@ -202,7 +202,7 @@ mod tests {
     fn test_libra_default() {
         let libra = Libra::default();
         assert_eq!(libra.config, Config::default());
-        assert_eq!(libra.device, Device::new(Model::LibraV0, 0));
+        assert_eq!(libra.device, Device::new(Model::LibraV0, "Lib0"));
     }
 
     #[test]
@@ -212,7 +212,7 @@ mod tests {
 
         let libra1 = Libra::default();
         let mut libra2 = Libra::default();
-        libra2.device = Device::new(Model::LibraV0, 1);
+        libra2.device = Device::new(Model::LibraV0, "L1");
         let libras = vec![libra1.clone(), libra2.clone()];
 
         let result = Libra::new_config_file(libras, file_path);
@@ -249,9 +249,9 @@ mod tests {
         let file_path = test_file.path();
 
         let mut libra1 = Libra::default();
-        libra1.device = Device::new(Model::LibraV0, 1);
+        libra1.device = Device::new(Model::LibraV0, "L1");
         let mut libra2 = Libra::default();
-        libra2.device = Device::new(Model::LibraV0, 2);
+        libra2.device = Device::new(Model::LibraV0, "L2");
         Libra::new_config_file(vec![libra1.clone(), libra2.clone()], file_path).unwrap();
 
         let mut edited_libra1 = libra1.clone();
@@ -284,7 +284,7 @@ mod tests {
         Libra::new_config_file(vec![libra1], file_path).unwrap();
 
         let mut libra_to_edit = Libra::default();
-        libra_to_edit.device = Device::new(Model::LibraV0, 1); // different device
+        libra_to_edit.device = Device::new(Model::LibraV0, "L1"); // different device
         libra_to_edit.config.ingredient = "New Ingredient".to_string();
 
         let result = libra_to_edit.edit_config_file(file_path);
@@ -301,7 +301,7 @@ mod tests {
         Libra::new_config_file(vec![libra1.clone()], file_path).unwrap();
 
         let mut libra2 = Libra::default();
-        libra2.device = Device::new(Model::LibraV0, 1);
+        libra2.device = Device::new(Model::LibraV0, "L1");
 
         let result = libra2.clone().add_to_config_file(file_path);
         assert!(result.is_ok());
@@ -341,7 +341,7 @@ mod tests {
 
         let libra1 = Libra::default();
         let mut libra2 = Libra::default();
-        libra2.device = Device::new(Model::LibraV0, 1);
+        libra2.device = Device::new(Model::LibraV0, "L1");
         Libra::new_config_file(vec![libra1.clone(), libra2.clone()], file_path).unwrap();
 
         let result = Libra::remove_from_config_file(libra1.device.clone(), file_path);
@@ -356,7 +356,7 @@ mod tests {
     #[test]
     fn test_remove_from_config_file_not_found() {
         let test_file = TestFile::new("remove_config_not_found.toml");
-        let device = Device::new(Model::LibraV0, 1);
+        let device = Device::new(Model::LibraV0, "L1");
         let result = Libra::remove_from_config_file(device, test_file.path());
         assert!(result.is_err());
         assert!(matches!(result.unwrap_err(), Error::FileNotFound));
@@ -370,7 +370,7 @@ mod tests {
         let libra1 = Libra::default();
         Libra::new_config_file(vec![libra1], file_path).unwrap();
 
-        let device_to_remove = Device::new(Model::LibraV0, 99); // Not in file
+        let device_to_remove = Device::new(Model::LibraV0, "L99"); // Not in file
 
         let result = Libra::remove_from_config_file(device_to_remove, file_path);
         assert!(result.is_err());
