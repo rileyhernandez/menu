@@ -1,3 +1,4 @@
+pub mod action;
 pub mod backend;
 pub mod device;
 pub mod error;
@@ -7,4 +8,3 @@ pub mod ichibu;
 pub mod ichibu_items;
 pub mod libra;
 pub mod read;
-pub mod action;

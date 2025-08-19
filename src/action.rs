@@ -11,7 +11,7 @@ pub enum Action {
 
 impl std::fmt::Debug for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-         match self {
+        match self {
             Action::Served => write!(f, "Served"),
             Action::RanOut => write!(f, "RanOut"),
             Action::Refilled => write!(f, "Refilled"),
