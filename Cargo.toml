@@ -5,7 +5,7 @@ edition = "2024"
 
 [dependencies]
 
-reqwest = { version = "0.12.22", optional = true , features = ["blocking", "json", "rustls-tls"], default-features = false }
+reqwest = { version = "0.12.23", optional = true , features = ["blocking", "json", "rustls-tls"], default-features = false }
 serde = { version = "1.0.219", features = ["derive"] }
 serde_json = { version = "1.0.140", optional = true }
 thiserror = "2.0.12"
