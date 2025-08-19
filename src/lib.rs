@@ -7,4 +7,4 @@ pub mod ichibu;
 pub mod ichibu_items;
 pub mod libra;
 pub mod read;
-mod action;
+pub mod action;
