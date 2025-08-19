@@ -8,6 +8,20 @@ pub enum Action {
     Heartbeat,
     Offline,
 }
+
+impl std::fmt::Debug for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+         match self {
+            Action::Served => write!(f, "Served"),
+            Action::RanOut => write!(f, "RanOut"),
+            Action::Refilled => write!(f, "Refilled"),
+            Action::Starting => write!(f, "Starting"),
+            Action::Heartbeat => write!(f, "Heartbeat"),
+            Action::Offline => write!(f, "Offline"),
+        }
+    }
+}
+
 impl std::fmt::Display for Action {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
