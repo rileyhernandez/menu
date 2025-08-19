@@ -1,5 +1,7 @@
 use std::str::FromStr;
+use serde::{Deserialize, Serialize};
 
+#[derive(Serialize, Deserialize)]
 pub enum Action {
     Served,
     RanOut,
