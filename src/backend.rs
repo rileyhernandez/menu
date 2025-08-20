@@ -182,7 +182,7 @@ pub mod address {
     }
 }
 
-#[cfg(any(feature = "write", feature = "address"))]
+#[cfg(feature = "write")]
 #[cfg(test)]
 mod tests {
     use super::*;
