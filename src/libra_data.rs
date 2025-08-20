@@ -1,9 +1,9 @@
 use crate::action::Action;
 use crate::device::Device;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use time::OffsetDateTime;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct LibraData {
     pub device: Device,
     pub location: String,
