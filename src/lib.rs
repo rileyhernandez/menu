@@ -7,4 +7,5 @@ pub mod generate;
 pub mod ichibu;
 pub mod ichibu_items;
 pub mod libra;
+pub mod libra_data;
 pub mod read;
