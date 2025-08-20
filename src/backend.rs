@@ -22,6 +22,7 @@ pub mod write {
     impl ConfigBackend {
         pub fn make_new_device(&self, model: Model, config: Config) -> Result<Device, Error> {
             let client = reqwest::blocking::Client::new();
+            let a = 0;
             let url = format!("{}/{:?}", self.path, model);
             let response = client
                 .post(url)
