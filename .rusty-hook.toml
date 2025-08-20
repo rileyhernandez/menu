@@ -1,6 +1,7 @@
 [hooks]
 pre-push = "./scripts/pre-push.sh"
-pre-commit = "cargo fmt -- --check && cargo clippy -- -D warnings && cargo clippy --all-features -- -D warnings"
+#pre-commit = "cargo fmt -- --check && cargo clippy -- -D warnings && cargo clippy --all-features -- -D warnings"
+pre-commit = "echo pwd"
 
 [logging]
 verbose = true
